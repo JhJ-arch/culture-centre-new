@@ -1,5 +1,3 @@
-import { Student, Course } from './types';
-
-export const MOCK_STUDENTS: Student[] = [];
-
-export const MOCK_COURSES: Course[] = [];
+// This file is a duplicate of a file in the 'src' directory and is intentionally left blank.
+// Keeping it was causing build errors.
+// The correct file is located at 'src/constants.ts'.

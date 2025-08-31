@@ -1,11 +1,3 @@
-
-import { useContext } from 'react';
-import { AppContext } from '../contexts/AppContext';
-
-export const useAppContext = () => {
-    const context = useContext(AppContext);
-    if (context === undefined) {
-        throw new Error('useAppContext must be used within an AppProvider');
-    }
-    return context;
-};
+// This file is a duplicate of a file in the 'src' directory and is intentionally left blank.
+// Keeping it was causing build errors.
+// The correct file is located at 'src/hooks/useAppContext.ts'.
