@@ -1,6 +1,7 @@
 // Fix: Change to Firebase v8 style imports for compatibility.
-import firebase from "firebase/app";
-import "firebase/database";
+// Fix: Use 'compat' imports for v8 syntax with v9+ SDK.
+import firebase from "firebase/compat/app";
+import "firebase/compat/database";
 import firebaseConfig from "../firebaseConfig";
 
 // Initialize Firebase

@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-// Fix: Switch from react-router-dom v6 components to v5 compatible ones.
-import { HashRouter, Switch, Route, Redirect } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { User, Role, Course, Student, SchoolInfo, AppState } from './types';
 import TeacherPage from './pages/TeacherPage';
 import StudentPage from './pages/StudentPage';
@@ -13,7 +12,7 @@ import { listenToStateChanges, saveState } from './firebase/databaseService';
 import { MOCK_COURSES, MOCK_STUDENTS } from './constants';
 
 const AppRouter: React.FC = () => {
-    const { user, isLoading, schoolInfo } = useAppContext();
+    const { user, isLoading } = useAppContext();
 
     if (isLoading && !user) {
         return (
@@ -27,33 +26,29 @@ const AppRouter: React.FC = () => {
 
     if (!user) {
         return (
-            // Fix: Replaced v6 <Routes> with v5 <Switch> and adapted Route syntax.
-            <Switch>
-                <Route path="/login" component={LoginPage} />
-                <Redirect to="/login" />
-            </Switch>
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
         );
     }
 
     const homePath = user.role === Role.Teacher ? '/teacher' : '/student';
 
     return (
-        // Fix: Replaced v6 <Routes> with v5 <Switch> and adapted Route syntax.
-        <Switch>
-            <Route path="/login">
-                <Redirect to={homePath} />
-            </Route>
+        <Routes>
+            <Route path="/login" element={<Navigate to={homePath} replace />} />
 
             {user.role === Role.Teacher && (
-                <Route path="/teacher" component={TeacherPage} />
+                <Route path="/teacher/*" element={<TeacherPage />} />
             )}
 
             {user.role === Role.Student && (
-                <Route path="/student" component={StudentPage} />
+                <Route path="/student/*" element={<StudentPage />} />
             )}
             
-            <Redirect to={homePath} />
-        </Switch>
+            <Route path="*" element={<Navigate to={homePath} replace />} />
+        </Routes>
     );
 };
 

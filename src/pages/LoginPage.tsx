@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-// Fix: Switched from react-router-dom v6 `useNavigate` to v5 `useHistory`.
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { Role } from '../types';
 import { getState, getStudentLoginInfo } from '../firebase/databaseService';
@@ -8,8 +7,7 @@ import { getState, getStudentLoginInfo } from '../firebase/databaseService';
 const LoginPage: React.FC = () => {
     const [isTeacherLogin, setIsTeacherLogin] = useState(false);
     const { setUser, setSchoolInfo } = useAppContext();
-    // Fix: Use useHistory() for v5 compatibility.
-    const history = useHistory();
+    const navigate = useNavigate();
 
     const [school, setSchool] = useState('');
     const [grade, setGrade] = useState('');
@@ -24,8 +22,7 @@ const LoginPage: React.FC = () => {
         if (school && grade && teacherPassword === 'ansghktpsxjekd') {
             setSchoolInfo({ school, grade });
             setUser({ id: 'teacher1', name: '선생님', role: Role.Teacher });
-            // Fix: Use history.push for navigation.
-            history.push('/teacher');
+            navigate('/teacher');
         } else {
             setError('학교, 반, 비밀번호를 정확히 입력해주세요.');
         }
@@ -50,8 +47,7 @@ const LoginPage: React.FC = () => {
                 if (student) {
                     setSchoolInfo({ school: loginInfo.school, grade: loginInfo.grade });
                     setUser(student);
-                    // Fix: Use history.push for navigation.
-                    history.push('/student');
+                    navigate('/student');
                 } else {
                      setError('학생 정보를 찾을 수 없습니다. 관리자에게 문의하세요.');
                 }

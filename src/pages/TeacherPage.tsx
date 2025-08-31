@@ -1,6 +1,5 @@
 import React from 'react';
-// Cleaned up imports for react-router-dom v6
-import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import CourseStatusDashboard from '../components/teacher/CourseStatusDashboard';
 import CourseManagement from '../components/teacher/CourseManagement';
@@ -62,13 +61,12 @@ const TeacherPage: React.FC = () => {
                 </div>
             </aside>
             <main className="flex-1 p-8 overflow-y-auto">
-                {/* Fix: Replaced v6 <Routes> with v5 <Switch> and adapted Route syntax. */}
-                <Switch>
-                    <Route exact path={path} component={CourseStatusDashboard} />
-                    <Route path={`${path}/status`} component={CourseStatusDashboard} />
-                    <Route path={`${path}/management`} component={CourseManagement} />
-                    <Route path={`${path}/students`} component={StudentManagement} />
-                </Switch>
+                <Routes>
+                    <Route index element={<Navigate to="status" replace />} />
+                    <Route path="status" element={<CourseStatusDashboard />} />
+                    <Route path="management" element={<CourseManagement />} />
+                    <Route path="students" element={<StudentManagement />} />
+                </Routes>
             </main>
         </div>
     );
