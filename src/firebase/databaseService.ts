@@ -1,6 +1,6 @@
-import { get, ref, onValue, set, Unsubscribe } from "firebase/database";
+import { get, ref, onValue, set, Unsubscribe, update } from "firebase/database";
 import { db } from './firebase';
-import { AppState, Course } from '../types';
+import { AppState, Course, Student } from '../types';
 
 // Helper to create a URL-safe key from school and grade information
 const createClassKey = (school: string, grade: string) => {
@@ -36,7 +36,8 @@ const deserializeState = (data: any): AppState => {
 // --- Database API ---
 
 /**
- * Saves the entire application state for a specific class to Firebase.
+ * Saves the entire application state for a specific class to Firebase
+ * and synchronizes a global student index for authentication.
  * @param school The name of the school.
  * @param grade The name of the grade/class.
  * @param state The application state to save.
@@ -44,9 +45,36 @@ const deserializeState = (data: any): AppState => {
 export const saveState = async (school: string, grade: string, state: AppState): Promise<void> => {
     try {
         const classKey = createClassKey(school, grade);
-        const dataRef = ref(db, `classData/${classKey}`);
+
+        // Fetch old students from the same classKey to compare for index updates.
+        const oldStateSnapshot = await get(ref(db, `classData/${classKey}`));
+        const oldStudents: Student[] = oldStateSnapshot.exists() ? deserializeState(oldStateSnapshot.val()).students : [];
+
         const serializableState = serializeState(state);
-        await set(dataRef, serializableState);
+
+        const updates: Record<string, any> = {};
+        updates[`/classData/${classKey}`] = serializableState;
+
+        const oldStudentUsernames = new Set(oldStudents.map(s => s.username));
+        const newStudentUsernames = new Set(state.students.map(s => s.username));
+
+        // Clean up index for removed or username-changed students
+        for (const username of oldStudentUsernames) {
+            if (!newStudentUsernames.has(username)) {
+                updates[`/studentIndex/${username}`] = null;
+            }
+        }
+
+        // Add/update students in the global index
+        for (const student of state.students) {
+            updates[`/studentIndex/${student.username}`] = {
+                school: school,
+                grade: grade,
+                password: student.password,
+            };
+        }
+
+        await update(ref(db), updates);
     } catch (error) {
         console.error("Error saving state to Firebase:", error);
         throw new Error("Failed to save data to the server.");
@@ -65,6 +93,20 @@ export const getState = async (school: string, grade: string): Promise<AppState 
     const snapshot = await get(dataRef);
     if (snapshot.exists()) {
         return deserializeState(snapshot.val());
+    }
+    return null;
+};
+
+/**
+ * Fetches a student's login information (school, grade, password) from the global index.
+ * @param username The student's username.
+ * @returns The student's login info, or null if not found.
+ */
+export const getStudentLoginInfo = async (username: string): Promise<{ school: string; grade: string; password?: string } | null> => {
+    const dataRef = ref(db, `studentIndex/${username}`);
+    const snapshot = await get(dataRef);
+    if (snapshot.exists()) {
+        return snapshot.val();
     }
     return null;
 };

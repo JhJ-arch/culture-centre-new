@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { Role } from '../types';
-import { getState } from '../firebase/databaseService';
+import { getState, getStudentLoginInfo } from '../firebase/databaseService';
 
 const LoginPage: React.FC = () => {
     const [isTeacherLogin, setIsTeacherLogin] = useState(false);
@@ -30,22 +30,29 @@ const LoginPage: React.FC = () => {
 
     const handleStudentLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!school || !grade || !username || !password) {
-            setError('학교, 반, 아이디, 비밀번호를 모두 입력해주세요.');
+        if (!username || !password) {
+            setError('아이디와 비밀번호를 모두 입력해주세요.');
             return;
         }
 
         setIsLoading(true);
         setError('');
         try {
-            const state = await getState(school, grade);
-            const student = state?.students?.find(s => s.username === username && s.password === password);
-            if (student) {
-                setSchoolInfo({ school, grade });
-                setUser(student);
-                navigate('/student');
+            const loginInfo = await getStudentLoginInfo(username);
+            
+            if (loginInfo && loginInfo.password === password) {
+                const state = await getState(loginInfo.school, loginInfo.grade);
+                const student = state?.students?.find(s => s.username === username);
+
+                if (student) {
+                    setSchoolInfo({ school: loginInfo.school, grade: loginInfo.grade });
+                    setUser(student);
+                    navigate('/student');
+                } else {
+                     setError('학생 정보를 찾을 수 없습니다. 관리자에게 문의하세요.');
+                }
             } else {
-                setError('학교, 반, 아이디 또는 비밀번호가 일치하지 않습니다.');
+                setError('아이디 또는 비밀번호가 일치하지 않습니다.');
             }
         } catch (err) {
             console.error(err);
@@ -120,28 +127,6 @@ const LoginPage: React.FC = () => {
                         </form>
                     ) : (
                         <form onSubmit={handleStudentLogin} className="space-y-6">
-                             <div>
-                                <label htmlFor="student-school" className="block text-sm font-medium text-gray-700">학교</label>
-                                <input
-                                    id="student-school"
-                                    type="text"
-                                    value={school}
-                                    onChange={(e) => setSchool(e.target.value)}
-                                    className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="선생님께 받은 학교 이름을 입력하세요"
-                                />
-                            </div>
-                             <div>
-                                <label htmlFor="student-grade" className="block text-sm font-medium text-gray-700">반</label>
-                                <input
-                                    id="student-grade"
-                                    type="text"
-                                    value={grade}
-                                    onChange={(e) => setGrade(e.target.value)}
-                                    className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                    placeholder="선생님께 받은 반 이름을 입력하세요"
-                                />
-                            </div>
                              <div>
                                 <label htmlFor="username" className="block text-sm font-medium text-gray-700">아이디</label>
                                 <input
