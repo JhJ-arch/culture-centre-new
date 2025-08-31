@@ -1,14 +1,21 @@
-// IMPORTANT: Replace these placeholder values with your actual Firebase project configuration.
-// You can get this from the Firebase Console of your project.
-// Go to Project settings (gear icon) > General tab, scroll down to "Your apps", and find the config object.
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  // For Realtime Database, it should be something like "https://<DATABASE_NAME>.firebaseio.com"
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com", 
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAZfD7Km0ZAw7uoJf_v84MlxKeafRBlizc",
+  authDomain: "culturecentre-3cbf2.firebaseapp.com",
+  projectId: "culturecentre-3cbf2",
+  storageBucket: "culturecentre-3cbf2.firebasestorage.app",
+  messagingSenderId: "1013628629820",
+  appId: "1:1013628629820:web:c1058c2015192acd2ea439",
+  measurementId: "G-MCECBR5RRH"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
