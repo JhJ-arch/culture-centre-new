@@ -47,15 +47,20 @@ export const saveState = async (school: string, grade: string, state: AppState):
     try {
         const classKey = createClassKey(school, grade);
 
-        // Fix: Replaced v9 get(ref(...)) with v8 .get() method.
         const oldStateSnapshot = await db.ref(`classData/${classKey}`).get();
         const oldStudents: Student[] = oldStateSnapshot.exists() ? deserializeState(oldStateSnapshot.val()).students : [];
 
-        const serializableState = serializeState(state);
-
         const updates: Record<string, any> = {};
-        updates[`/classData/${classKey}`] = serializableState;
 
+        // 1. Prepare student data for classData (without passwords for security)
+        const studentsWithoutPasswords = state.students.map(s => {
+            const { password, ...studentData } = s;
+            return studentData;
+        });
+        const finalStateToSave = { ...state, students: studentsWithoutPasswords };
+        updates[`/classData/${classKey}`] = serializeState(finalStateToSave);
+
+        // 2. Handle studentIndex updates
         const oldStudentUsernames = new Set(oldStudents.map(s => s.username));
         const newStudentUsernames = new Set(state.students.map(s => s.username));
 
@@ -66,16 +71,18 @@ export const saveState = async (school: string, grade: string, state: AppState):
             }
         }
 
-        // Add/update students in the global index
+        // Add/update students in the global index, ONLY if a password is provided
+        // This prevents wiping passwords of existing students
         for (const student of state.students) {
-            updates[`/studentIndex/${student.username}`] = {
-                school: school,
-                grade: grade,
-                password: student.password,
-            };
+            if (student.password && student.username) {
+                updates[`/studentIndex/${student.username}`] = {
+                    school: school,
+                    grade: grade,
+                    password: student.password,
+                };
+            }
         }
         
-        // Fix: Replaced v9 update(ref(...)) with v8 .update() method.
         await db.ref().update(updates);
     } catch (error) {
         console.error("Error saving state to Firebase:", error);

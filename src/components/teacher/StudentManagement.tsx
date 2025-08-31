@@ -133,12 +133,15 @@ const StudentManagement: React.FC = () => {
         
         const updatedStudents = students.map(s => {
             if (s.id === editingStudent.id) {
-                return {
+                const updatedStudent: Student = {
                     ...s,
                     name: editedStudentData.name,
                     username: editedStudentData.username,
-                    password: editedStudentData.password ? editedStudentData.password : s.password,
                 };
+                if (editedStudentData.password) {
+                    updatedStudent.password = editedStudentData.password;
+                }
+                return updatedStudent;
             }
             return s;
         });

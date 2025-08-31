@@ -102,16 +102,32 @@ const App: React.FC = () => {
     }, [schoolInfo]);
     
     const setStudents = useCallback((newStudents: Student[]) => {
+        const previousStudents = stateRef.current.students;
+        setStudentsState(newStudents); // Optimistic update
+
         if (schoolInfo) {
             const currentState: AppState = { students: newStudents, courses: stateRef.current.courses, schoolInfo };
-            saveState(schoolInfo.school, schoolInfo.grade, currentState);
+            saveState(schoolInfo.school, schoolInfo.grade, currentState)
+                .catch(error => {
+                    console.error("Failed to save students, reverting state.", error);
+                    setStudentsState(previousStudents); 
+                    alert("학생 정보 저장에 실패했습니다. 다시 시도해주세요.");
+                });
         }
     }, [schoolInfo]);
 
     const setCourses = useCallback((newCourses: Course[]) => {
+        const previousCourses = stateRef.current.courses;
+        setCoursesState(newCourses); // Optimistic update
+
         if (schoolInfo) {
             const currentState: AppState = { students: stateRef.current.students, courses: newCourses, schoolInfo };
-            saveState(schoolInfo.school, schoolInfo.grade, currentState);
+            saveState(schoolInfo.school, schoolInfo.grade, currentState)
+                .catch(error => {
+                    console.error("Failed to save courses, reverting state.", error);
+                    setCoursesState(previousCourses);
+                    alert("강의 정보 저장에 실패했습니다. 다시 시도해주세요.");
+                });
         }
     }, [schoolInfo]);
 
