@@ -13,7 +13,9 @@ const CourseStatusDashboard: React.FC = () => {
     const approvedCourses = courses.filter(c => c.status === CourseStatus.APPROVED);
 
     const handleUpdateCourse = (updatedCourse: Course) => {
-        setCourses(prevCourses => prevCourses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+        // Fix: The `setCourses` function expects a `Course[]` array, not a function.
+        // We now correctly map over the existing `courses` array to create the updated list.
+        setCourses(courses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
         setManagingCourse(updatedCourse);
     };
 

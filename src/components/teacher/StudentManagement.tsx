@@ -22,7 +22,7 @@ const StudentManagement: React.FC = () => {
                 ...newStudent,
                 role: Role.Student,
             };
-            setStudents(prev => [...prev, newStudentData]);
+            setStudents([...students, newStudentData]);
             alert(`학생 계정이 생성되었습니다.\n\n이름: ${newStudent.name}\n아이디: ${newStudent.username}\n비밀번호: ${newStudent.password}\n\n이 정보를 학생에게 전달해주세요.`);
             setNewStudent({ name: '', username: '', password: '' });
         }
@@ -90,7 +90,7 @@ const StudentManagement: React.FC = () => {
                 }
                 
                 if (newStudents.length > 0) {
-                    setStudents(prev => [...prev, ...newStudents]);
+                    setStudents([...students, ...newStudents]);
                     alert(`${newStudents.length}명의 학생이 성공적으로 추가되었습니다.`);
                 } else {
                     alert("엑셀 파일에서 추가할 학생 데이터를 찾을 수 없습니다.");
@@ -111,7 +111,7 @@ const StudentManagement: React.FC = () => {
 
     const handleDeleteStudent = (studentId: string) => {
         if (window.confirm('정말로 이 학생을 삭제하시겠습니까?')) {
-            setStudents(prev => prev.filter(s => s.id !== studentId));
+            setStudents(students.filter(s => s.id !== studentId));
         }
     };
 
@@ -131,7 +131,7 @@ const StudentManagement: React.FC = () => {
         e.preventDefault();
         if (!editingStudent) return;
         
-        setStudents(prev => prev.map(s => {
+        const updatedStudents = students.map(s => {
             if (s.id === editingStudent.id) {
                 return {
                     ...s,
@@ -141,7 +141,8 @@ const StudentManagement: React.FC = () => {
                 };
             }
             return s;
-        }));
+        });
+        setStudents(updatedStudents);
         closeEditModal();
     };
 

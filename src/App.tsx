@@ -1,36 +1,27 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { User, Role, Course, Student } from './types';
+import { User, Role, Course, Student, SchoolInfo, AppState } from './types';
 import TeacherPage from './pages/TeacherPage';
 import StudentPage from './pages/StudentPage';
 import LoginPage from './pages/LoginPage';
 import { AppContext } from './contexts/AppContext';
-import { MOCK_COURSES, MOCK_STUDENTS } from './constants';
 import { useAppContext } from './hooks/useAppContext';
-
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    try {
-        const saved = localStorage.getItem(key);
-        if (!saved) return defaultValue;
-
-        const parsed = JSON.parse(saved);
-
-        if (key === 'courses' && Array.isArray(parsed)) {
-            return (parsed as any[]).map(course => ({
-                ...course,
-                date: new Date(course.date), // Rehydrate date string to Date object
-            })) as T;
-        }
-
-        return parsed;
-    } catch (error) {
-        console.error(`Error reading from localStorage for key "${key}":`, error);
-        return defaultValue;
-    }
-};
+import { listenToStateChanges, saveState } from './firebase/databaseService';
+import { Unsubscribe } from 'firebase/database';
+import { MOCK_COURSES, MOCK_STUDENTS } from './constants';
 
 const AppRouter: React.FC = () => {
-    const { user } = useAppContext();
+    const { user, isLoading, schoolInfo } = useAppContext();
+
+    if (isLoading && !user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="text-center">
+                    <p className="text-lg font-semibold text-gray-700">데이터를 불러오는 중...</p>
+                </div>
+            </div>
+        )
+    }
 
     if (!user) {
         return (
@@ -62,38 +53,59 @@ const AppRouter: React.FC = () => {
 
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
-    const [courses, setCourses] = useState<Course[]>(() => getInitialState('courses', MOCK_COURSES));
-    const [students, setStudents] = useState<Student[]>(() => getInitialState('students', MOCK_STUDENTS));
-    const [schoolInfo, setSchoolInfo] = useState<{ school: string, grade: string } | null>(() => getInitialState('schoolInfo', null));
+    const [courses, setCoursesState] = useState<Course[]>([]);
+    const [students, setStudentsState] = useState<Student[]>([]);
+    const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
-        try {
-            localStorage.setItem('students', JSON.stringify(students));
-        } catch (error) {
-            console.error('Error saving students to localStorage:', error);
+        let unsubscribe: Unsubscribe | null = null;
+
+        if (schoolInfo) {
+            setIsLoading(true);
+            unsubscribe = listenToStateChanges(schoolInfo.school, schoolInfo.grade, (state) => {
+                if (state) {
+                    setStudentsState(state.students || []);
+                    setCoursesState(state.courses || []);
+                } else {
+                    // If no data exists in firebase for this school/grade, initialize with mocks
+                    const initialState: AppState = {
+                        students: MOCK_STUDENTS,
+                        courses: MOCK_COURSES,
+                        schoolInfo: schoolInfo,
+                    }
+                    saveState(schoolInfo.school, schoolInfo.grade, initialState);
+                    setStudentsState(initialState.students);
+                    setCoursesState(initialState.courses);
+                }
+                setIsLoading(false);
+            });
+        } else {
+            // Reset state when logged out
+            setStudentsState([]);
+            setCoursesState([]);
         }
-    }, [students]);
 
-    useEffect(() => {
-        try {
-            localStorage.setItem('courses', JSON.stringify(courses));
-        } catch (error) {
-            console.error('Error saving courses to localStorage:', error);
-        }
-    }, [courses]);
-
-    useEffect(() => {
-        try {
-            if (schoolInfo) {
-                localStorage.setItem('schoolInfo', JSON.stringify(schoolInfo));
-            } else {
-                localStorage.removeItem('schoolInfo');
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
             }
-        } catch (error) {
-            console.error('Error handling schoolInfo in localStorage:', error);
-        }
+        };
     }, [schoolInfo]);
+    
+    const setStudents = useCallback((newStudents: Student[]) => {
+        if (schoolInfo) {
+            const currentState: AppState = { students: newStudents, courses, schoolInfo };
+            saveState(schoolInfo.school, schoolInfo.grade, currentState);
+        }
+    }, [schoolInfo, courses]);
 
+    const setCourses = useCallback((newCourses: Course[]) => {
+        if (schoolInfo) {
+            const currentState: AppState = { students, courses: newCourses, schoolInfo };
+            saveState(schoolInfo.school, schoolInfo.grade, currentState);
+        }
+    }, [schoolInfo, students]);
 
     const contextValue = useMemo(() => ({
         user,
@@ -103,8 +115,9 @@ const App: React.FC = () => {
         students,
         setStudents,
         schoolInfo,
-        setSchoolInfo
-    }), [user, courses, students, schoolInfo]);
+        setSchoolInfo,
+        isLoading
+    }), [user, courses, students, schoolInfo, isLoading, setCourses, setStudents]);
 
     return (
         <AppContext.Provider value={contextValue}>

@@ -37,28 +37,29 @@ const CourseManagement: React.FC = () => {
     const [managingCourse, setManagingCourse] = useState<Course | null>(null);
 
     const handleApprove = (courseId: string) => {
-        setCourses(prev => prev.map(c => {
+        const newCourses = courses.map(c => {
             if (c.id === courseId && c.creatorId) {
                 return { ...c, status: CourseStatus.APPROVED, enrolledStudentIds: [c.creatorId] };
             }
             return c;
-        }));
+        });
+        setCourses(newCourses);
         setSelectedRequest(null);
     };
 
     const handleReject = (courseId: string) => {
-        setCourses(prev => prev.filter(c => c.id !== courseId));
+        setCourses(courses.filter(c => c.id !== courseId));
         setSelectedRequest(null);
     };
     
     const handleCancel = (courseId: string) => {
          if(window.confirm("정말로 이 강의를 취소하시겠습니까? 학생들에게서도 강의가 사라집니다.")) {
-            setCourses(prev => prev.map(c => c.id === courseId ? { ...c, status: CourseStatus.CANCELLED } : c));
+            setCourses(courses.map(c => c.id === courseId ? { ...c, status: CourseStatus.CANCELLED } : c));
          }
     }
 
     const handleUpdateCourse = (updatedCourse: Course) => {
-        setCourses(prevCourses => prevCourses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+        setCourses(courses.map(c => c.id === updatedCourse.id ? updatedCourse : c));
         setManagingCourse(updatedCourse);
     };
 

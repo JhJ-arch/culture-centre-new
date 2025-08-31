@@ -12,14 +12,13 @@ const StudentCourseList: React.FC = () => {
     if (!user) return null;
 
     const handleApply = (courseId: string) => {
-        setCourses(prevCourses => 
-            prevCourses.map(course => {
-                if (course.id === courseId && !course.applicants.includes(user.id)) {
-                    return { ...course, applicants: [...course.applicants, user.id] };
-                }
-                return course;
-            })
-        );
+        const updatedCourses = courses.map(course => {
+            if (course.id === courseId && !course.applicants.includes(user.id)) {
+                return { ...course, applicants: [...course.applicants, user.id] };
+            }
+            return course;
+        });
+        setCourses(updatedCourses);
         setShowPopup(true);
     };
 

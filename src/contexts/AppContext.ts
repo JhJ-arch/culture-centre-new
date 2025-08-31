@@ -1,15 +1,16 @@
 import React, { createContext } from 'react';
-import { User, Course, Student } from '../types';
+import { User, Course, Student, SchoolInfo } from '../types';
 
 interface AppContextType {
     user: User | null;
     setUser: React.Dispatch<React.SetStateAction<User | null>>;
     courses: Course[];
-    setCourses: React.Dispatch<React.SetStateAction<Course[]>>;
+    setCourses: (courses: Course[]) => void;
     students: Student[];
-    setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
-    schoolInfo: { school: string; grade: string } | null;
-    setSchoolInfo: React.Dispatch<React.SetStateAction<{ school: string; grade: string } | null>>;
+    setStudents: (students: Student[]) => void;
+    schoolInfo: SchoolInfo | null;
+    setSchoolInfo: React.Dispatch<React.SetStateAction<SchoolInfo | null>>;
+    isLoading: boolean;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);

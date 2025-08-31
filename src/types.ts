@@ -39,3 +39,14 @@ export interface Course {
     enrolledStudentIds: string[];
     applicants: string[];
 }
+
+export interface SchoolInfo {
+    school: string;
+    grade: string;
+}
+
+export interface AppState {
+    students: Student[];
+    courses: Course[];
+    schoolInfo: SchoolInfo | null;
+}

@@ -3,7 +3,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { CourseStatus } from '../../types';
 
 const StudentCreateCourse: React.FC = () => {
-    const { user, setCourses } = useAppContext();
+    const { user, courses, setCourses } = useAppContext();
     const [courseName, setCourseName] = useState('');
     const [instructor, setInstructor] = useState('');
     const [date, setDate] = useState('');
@@ -48,7 +48,7 @@ const StudentCreateCourse: React.FC = () => {
             enrolledStudentIds: [],
             applicants: [user.id],
         };
-        setCourses(prev => [...prev, newCourse]);
+        setCourses([...courses, newCourse]);
         setIsSubmitted(true);
         // Reset form
         setCourseName('');
