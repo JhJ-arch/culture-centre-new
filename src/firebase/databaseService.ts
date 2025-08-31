@@ -1,7 +1,6 @@
-// Fix: Removed v9 modular imports. v8 methods are called from the db instance.
 import { db } from './firebase';
 import { AppState, Course, Student } from '../types';
-import type { DataSnapshot } from 'firebase/database';
+import { ref, get, update, onValue, type DataSnapshot } from 'firebase/database';
 
 // Helper to create a URL-safe key from school and grade information
 const createClassKey = (school: string, grade: string) => {
@@ -47,7 +46,7 @@ export const saveState = async (school: string, grade: string, state: AppState):
     try {
         const classKey = createClassKey(school, grade);
 
-        const oldStateSnapshot = await db.ref(`classData/${classKey}`).get();
+        const oldStateSnapshot = await get(ref(db, `classData/${classKey}`));
         const oldStudents: Student[] = oldStateSnapshot.exists() ? deserializeState(oldStateSnapshot.val()).students : [];
 
         const updates: Record<string, any> = {};
@@ -83,7 +82,7 @@ export const saveState = async (school: string, grade: string, state: AppState):
             }
         }
         
-        await db.ref().update(updates);
+        await update(ref(db), updates);
     } catch (error) {
         console.error("Error saving state to Firebase:", error);
         throw new Error("Failed to save data to the server.");
@@ -98,9 +97,8 @@ export const saveState = async (school: string, grade: string, state: AppState):
  */
 export const getState = async (school: string, grade: string): Promise<AppState | null> => {
     const classKey = createClassKey(school, grade);
-    // Fix: Replaced v9 ref() and get() with v8 db.ref().get().
-    const dataRef = db.ref(`classData/${classKey}`);
-    const snapshot = await dataRef.get();
+    const dataRef = ref(db, `classData/${classKey}`);
+    const snapshot = await get(dataRef);
     if (snapshot.exists()) {
         return deserializeState(snapshot.val());
     }
@@ -113,9 +111,8 @@ export const getState = async (school: string, grade: string): Promise<AppState 
  * @returns The student's login info, or null if not found.
  */
 export const getStudentLoginInfo = async (username: string): Promise<{ school: string; grade: string; password?: string } | null> => {
-    // Fix: Replaced v9 ref() and get() with v8 db.ref().get().
-    const dataRef = db.ref(`studentIndex/${username}`);
-    const snapshot = await dataRef.get();
+    const dataRef = ref(db, `studentIndex/${username}`);
+    const snapshot = await get(dataRef);
     if (snapshot.exists()) {
         return snapshot.val();
     }
@@ -130,13 +127,10 @@ export const getStudentLoginInfo = async (username: string): Promise<{ school: s
  * @param callback The function to call with the new state whenever data changes.
  * @returns An unsubscribe function to detach the listener.
  */
-// Fix: The Unsubscribe type is not available as a named export in v8. Returning a function.
 export const listenToStateChanges = (school: string, grade: string, callback: (state: AppState | null) => void): (() => void) => {
     const classKey = createClassKey(school, grade);
-    // Fix: Replaced v9 ref() with v8 db.ref().
-    const dataRef = db.ref(`classData/${classKey}`);
+    const dataRef = ref(db, `classData/${classKey}`);
 
-    // Fix: Replaced v9 onValue() with v8 .on() and manual unsubscribe.
     const listener = (snapshot: DataSnapshot) => {
         if (snapshot.exists()) {
             callback(deserializeState(snapshot.val()));
@@ -149,7 +143,7 @@ export const listenToStateChanges = (school: string, grade: string, callback: (s
         console.error("Firebase listener error:", error);
     };
 
-    dataRef.on('value', listener, errorCallback);
+    const unsubscribe = onValue(dataRef, listener, errorCallback);
 
-    return () => dataRef.off('value', listener);
+    return unsubscribe;
 };

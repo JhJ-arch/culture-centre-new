@@ -8,12 +8,13 @@ import StudentCreateCourse from '../components/student/StudentCreateCourse';
 import { Home, BookMarked, LayoutList, PlusCircle, LogOut, UserCircle } from 'lucide-react';
 
 const StudentPage: React.FC = () => {
-    const { user, setUser } = useAppContext();
+    const { user, setUser, setSchoolInfo } = useAppContext();
     const location = useLocation();
     const navigate = useNavigate();
 
     const handleLogout = () => {
         setUser(null);
+        setSchoolInfo(null);
         navigate('/login');
     };
 

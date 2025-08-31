@@ -66,7 +66,6 @@ const App: React.FC = () => {
 
 
     useEffect(() => {
-        // Fix: Replaced Firebase v9 'Unsubscribe' type with a v8 compatible function type.
         let unsubscribe: (() => void) | null = null;
 
         if (schoolInfo) {
@@ -88,10 +87,6 @@ const App: React.FC = () => {
                 }
                 setIsLoading(false);
             });
-        } else {
-            // Reset state when logged out
-            setStudentsState([]);
-            setCoursesState([]);
         }
 
         return () => {

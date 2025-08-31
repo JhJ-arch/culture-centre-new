@@ -1,16 +1,11 @@
-// Fix: Change to Firebase v8 style imports for compatibility.
-// Fix: Use 'compat' imports for v8 syntax with v9+ SDK.
-import firebase from "firebase/compat/app";
-import "firebase/compat/database";
+// Fix: Use a namespace import to handle potential module resolution issues with "firebase/app".
+import * as firebaseApp from "firebase/app";
+import { getDatabase } from "firebase/database";
 import firebaseConfig from "../firebaseConfig";
 
 // Initialize Firebase
-// Fix: Use v8 initialization syntax. The check prevents re-initialization.
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+const app = !firebaseApp.getApps().length ? firebaseApp.initializeApp(firebaseConfig) : firebaseApp.getApp();
 
 
 // Initialize Realtime Database and get a reference to the service
-// Fix: Use v8 database access syntax.
-export const db = firebase.database();
+export const db = getDatabase(app);
