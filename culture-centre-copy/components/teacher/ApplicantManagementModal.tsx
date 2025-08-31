@@ -1,6 +1,8 @@
 
+
 import React, { useMemo } from 'react';
-import { Course, Student } from '../../types';
+// Fix: Corrected import path to point to types file in 'src' directory.
+import { Course, Student } from '../../src/types';
 import { Users, X, Check, UserPlus } from 'lucide-react';
 
 const ApplicantManagementModal: React.FC<{

@@ -1,6 +1,8 @@
 
+
 import React from 'react';
-import { Course, Student } from '../../types';
+// Fix: Corrected import path to point to types file in 'src' directory.
+import { Course, Student } from '../../src/types';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale/ko';
 import { Users, Calendar, MapPin, Package, List } from 'lucide-react';
