@@ -7,12 +7,13 @@ import StudentManagement from '../components/teacher/StudentManagement';
 import { Home, ListChecks, Users, BookOpenCheck, LogOut } from 'lucide-react';
 
 const TeacherPage: React.FC = () => {
-    const { schoolInfo, setUser } = useAppContext();
+    const { schoolInfo, setUser, setSchoolInfo } = useAppContext();
     const location = useLocation();
     const navigate = useNavigate();
 
     const handleLogout = () => {
         setUser(null);
+        setSchoolInfo(null);
         navigate('/login');
     };
 
