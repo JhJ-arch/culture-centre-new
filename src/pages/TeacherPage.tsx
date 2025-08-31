@@ -1,6 +1,6 @@
 import React from 'react';
-// Fix: Switch from react-router-dom v6 to v5 compatible imports.
-import { Switch, Route, Link, useLocation, useHistory, useRouteMatch } from 'react-router-dom';
+// Cleaned up imports for react-router-dom v6
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import CourseStatusDashboard from '../components/teacher/CourseStatusDashboard';
 import CourseManagement from '../components/teacher/CourseManagement';
@@ -10,16 +10,12 @@ import { Home, ListChecks, Users, BookOpenCheck, LogOut } from 'lucide-react';
 const TeacherPage: React.FC = () => {
     const { schoolInfo, setUser, setSchoolInfo } = useAppContext();
     const location = useLocation();
-    // Fix: Use useHistory() for v5 compatibility.
-    const history = useHistory();
-    // Fix: Use useRouteMatch() to get the base path for nested routes in v5.
-    const { path } = useRouteMatch();
+    const navigate = useNavigate();
 
     const handleLogout = () => {
         setUser(null);
         setSchoolInfo(null);
-        // Fix: Use history.push for navigation.
-        history.push('/login');
+        navigate('/login');
     };
 
     const navItems = [
