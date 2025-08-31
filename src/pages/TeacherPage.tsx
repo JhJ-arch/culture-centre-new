@@ -1,5 +1,6 @@
 import React from 'react';
-import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+// Fix: Switch from react-router-dom v6 to v5 compatible imports.
+import { Switch, Route, Link, useLocation, useHistory, useRouteMatch } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import CourseStatusDashboard from '../components/teacher/CourseStatusDashboard';
 import CourseManagement from '../components/teacher/CourseManagement';
@@ -9,12 +10,16 @@ import { Home, ListChecks, Users, BookOpenCheck, LogOut } from 'lucide-react';
 const TeacherPage: React.FC = () => {
     const { schoolInfo, setUser, setSchoolInfo } = useAppContext();
     const location = useLocation();
-    const navigate = useNavigate();
+    // Fix: Use useHistory() for v5 compatibility.
+    const history = useHistory();
+    // Fix: Use useRouteMatch() to get the base path for nested routes in v5.
+    const { path } = useRouteMatch();
 
     const handleLogout = () => {
         setUser(null);
         setSchoolInfo(null);
-        navigate('/login');
+        // Fix: Use history.push for navigation.
+        history.push('/login');
     };
 
     const navItems = [
@@ -61,12 +66,13 @@ const TeacherPage: React.FC = () => {
                 </div>
             </aside>
             <main className="flex-1 p-8 overflow-y-auto">
-                <Routes>
-                    <Route path="/" element={<CourseStatusDashboard />} />
-                    <Route path="status" element={<CourseStatusDashboard />} />
-                    <Route path="management" element={<CourseManagement />} />
-                    <Route path="students" element={<StudentManagement />} />
-                </Routes>
+                {/* Fix: Replaced v6 <Routes> with v5 <Switch> and adapted Route syntax. */}
+                <Switch>
+                    <Route exact path={path} component={CourseStatusDashboard} />
+                    <Route path={`${path}/status`} component={CourseStatusDashboard} />
+                    <Route path={`${path}/management`} component={CourseManagement} />
+                    <Route path={`${path}/students`} component={StudentManagement} />
+                </Switch>
             </main>
         </div>
     );

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+// Fix: Switch from react-router-dom v6 to v5 compatible imports.
+import { Switch, Route, Link, useLocation, useHistory, useRouteMatch } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import StudentHome from '../components/student/StudentHome';
 import StudentEnrollment from '../components/student/StudentEnrollment';
@@ -10,11 +11,16 @@ import { Home, BookMarked, LayoutList, PlusCircle, LogOut, UserCircle } from 'lu
 const StudentPage: React.FC = () => {
     const { user, setUser } = useAppContext();
     const location = useLocation();
-    const navigate = useNavigate();
+    // Fix: Use useHistory() for v5 compatibility.
+    const history = useHistory();
+    // Fix: Use useRouteMatch() to get the base path for nested routes in v5.
+    const { path } = useRouteMatch();
+
 
     const handleLogout = () => {
         setUser(null);
-        navigate('/login');
+        // Fix: Use history.push for navigation.
+        history.push('/login');
     };
 
     const navItems = [
@@ -62,13 +68,14 @@ const StudentPage: React.FC = () => {
                 </div>
             </aside>
             <main className="flex-1 p-8 overflow-y-auto">
-                <Routes>
-                    <Route path="/" element={<StudentHome />} />
-                    <Route path="home" element={<StudentHome />} />
-                    <Route path="enrollment" element={<StudentEnrollment />} />
-                    <Route path="list" element={<StudentCourseList />} />
-                    <Route path="create" element={<StudentCreateCourse />} />
-                </Routes>
+                {/* Fix: Replaced v6 <Routes> with v5 <Switch> and adapted Route syntax. */}
+                <Switch>
+                    <Route exact path={path} component={StudentHome} />
+                    <Route path={`${path}/home`} component={StudentHome} />
+                    <Route path={`${path}/enrollment`} component={StudentEnrollment} />
+                    <Route path={`${path}/list`} component={StudentCourseList} />
+                    <Route path={`${path}/create`} component={StudentCreateCourse} />
+                </Switch>
             </main>
         </div>
     );

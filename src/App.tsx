@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+// Fix: Switch from react-router-dom v6 components to v5 compatible ones.
+import { HashRouter, Switch, Route, Redirect } from 'react-router-dom';
 import { User, Role, Course, Student, SchoolInfo, AppState } from './types';
 import TeacherPage from './pages/TeacherPage';
 import StudentPage from './pages/StudentPage';
@@ -7,7 +8,8 @@ import LoginPage from './pages/LoginPage';
 import { AppContext } from './contexts/AppContext';
 import { useAppContext } from './hooks/useAppContext';
 import { listenToStateChanges, saveState } from './firebase/databaseService';
-import { Unsubscribe } from 'firebase/database';
+// Fix: The 'Unsubscribe' type is not exported in this manner in Firebase v8.
+// import { Unsubscribe } from 'firebase/database';
 import { MOCK_COURSES, MOCK_STUDENTS } from './constants';
 
 const AppRouter: React.FC = () => {
@@ -25,29 +27,33 @@ const AppRouter: React.FC = () => {
 
     if (!user) {
         return (
-            <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
+            // Fix: Replaced v6 <Routes> with v5 <Switch> and adapted Route syntax.
+            <Switch>
+                <Route path="/login" component={LoginPage} />
+                <Redirect to="/login" />
+            </Switch>
         );
     }
 
     const homePath = user.role === Role.Teacher ? '/teacher' : '/student';
 
     return (
-        <Routes>
-            <Route path="/login" element={<Navigate to={homePath} replace />} />
+        // Fix: Replaced v6 <Routes> with v5 <Switch> and adapted Route syntax.
+        <Switch>
+            <Route path="/login">
+                <Redirect to={homePath} />
+            </Route>
 
             {user.role === Role.Teacher && (
-                <Route path="/teacher/*" element={<TeacherPage />} />
+                <Route path="/teacher" component={TeacherPage} />
             )}
 
             {user.role === Role.Student && (
-                <Route path="/student/*" element={<StudentPage />} />
+                <Route path="/student" component={StudentPage} />
             )}
             
-            <Route path="*" element={<Navigate to={homePath} replace />} />
-        </Routes>
+            <Redirect to={homePath} />
+        </Switch>
     );
 };
 
@@ -58,8 +64,15 @@ const App: React.FC = () => {
     const [schoolInfo, setSchoolInfo] = useState<SchoolInfo | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    const stateRef = useRef({ students, courses });
     useEffect(() => {
-        let unsubscribe: Unsubscribe | null = null;
+        stateRef.current = { students, courses };
+    }, [students, courses]);
+
+
+    useEffect(() => {
+        // Fix: Replaced Firebase v9 'Unsubscribe' type with a v8 compatible function type.
+        let unsubscribe: (() => void) | null = null;
 
         if (schoolInfo) {
             setIsLoading(true);
@@ -95,17 +108,17 @@ const App: React.FC = () => {
     
     const setStudents = useCallback((newStudents: Student[]) => {
         if (schoolInfo) {
-            const currentState: AppState = { students: newStudents, courses, schoolInfo };
+            const currentState: AppState = { students: newStudents, courses: stateRef.current.courses, schoolInfo };
             saveState(schoolInfo.school, schoolInfo.grade, currentState);
         }
-    }, [schoolInfo, courses]);
+    }, [schoolInfo]);
 
     const setCourses = useCallback((newCourses: Course[]) => {
         if (schoolInfo) {
-            const currentState: AppState = { students, courses: newCourses, schoolInfo };
+            const currentState: AppState = { students: stateRef.current.students, courses: newCourses, schoolInfo };
             saveState(schoolInfo.school, schoolInfo.grade, currentState);
         }
-    }, [schoolInfo, students]);
+    }, [schoolInfo]);
 
     const contextValue = useMemo(() => ({
         user,

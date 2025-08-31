@@ -1,6 +1,7 @@
-import { get, ref, onValue, set, Unsubscribe, update } from "firebase/database";
+// Fix: Removed v9 modular imports. v8 methods are called from the db instance.
 import { db } from './firebase';
 import { AppState, Course, Student } from '../types';
+import type { DataSnapshot } from 'firebase/database';
 
 // Helper to create a URL-safe key from school and grade information
 const createClassKey = (school: string, grade: string) => {
@@ -46,8 +47,8 @@ export const saveState = async (school: string, grade: string, state: AppState):
     try {
         const classKey = createClassKey(school, grade);
 
-        // Fetch old students from the same classKey to compare for index updates.
-        const oldStateSnapshot = await get(ref(db, `classData/${classKey}`));
+        // Fix: Replaced v9 get(ref(...)) with v8 .get() method.
+        const oldStateSnapshot = await db.ref(`classData/${classKey}`).get();
         const oldStudents: Student[] = oldStateSnapshot.exists() ? deserializeState(oldStateSnapshot.val()).students : [];
 
         const serializableState = serializeState(state);
@@ -73,8 +74,9 @@ export const saveState = async (school: string, grade: string, state: AppState):
                 password: student.password,
             };
         }
-
-        await update(ref(db), updates);
+        
+        // Fix: Replaced v9 update(ref(...)) with v8 .update() method.
+        await db.ref().update(updates);
     } catch (error) {
         console.error("Error saving state to Firebase:", error);
         throw new Error("Failed to save data to the server.");
@@ -89,8 +91,9 @@ export const saveState = async (school: string, grade: string, state: AppState):
  */
 export const getState = async (school: string, grade: string): Promise<AppState | null> => {
     const classKey = createClassKey(school, grade);
-    const dataRef = ref(db, `classData/${classKey}`);
-    const snapshot = await get(dataRef);
+    // Fix: Replaced v9 ref() and get() with v8 db.ref().get().
+    const dataRef = db.ref(`classData/${classKey}`);
+    const snapshot = await dataRef.get();
     if (snapshot.exists()) {
         return deserializeState(snapshot.val());
     }
@@ -103,8 +106,9 @@ export const getState = async (school: string, grade: string): Promise<AppState 
  * @returns The student's login info, or null if not found.
  */
 export const getStudentLoginInfo = async (username: string): Promise<{ school: string; grade: string; password?: string } | null> => {
-    const dataRef = ref(db, `studentIndex/${username}`);
-    const snapshot = await get(dataRef);
+    // Fix: Replaced v9 ref() and get() with v8 db.ref().get().
+    const dataRef = db.ref(`studentIndex/${username}`);
+    const snapshot = await dataRef.get();
     if (snapshot.exists()) {
         return snapshot.val();
     }
@@ -119,19 +123,26 @@ export const getStudentLoginInfo = async (username: string): Promise<{ school: s
  * @param callback The function to call with the new state whenever data changes.
  * @returns An unsubscribe function to detach the listener.
  */
-export const listenToStateChanges = (school: string, grade: string, callback: (state: AppState | null) => void): Unsubscribe => {
+// Fix: The Unsubscribe type is not available as a named export in v8. Returning a function.
+export const listenToStateChanges = (school: string, grade: string, callback: (state: AppState | null) => void): (() => void) => {
     const classKey = createClassKey(school, grade);
-    const dataRef = ref(db, `classData/${classKey}`);
+    // Fix: Replaced v9 ref() with v8 db.ref().
+    const dataRef = db.ref(`classData/${classKey}`);
 
-    const unsubscribe = onValue(dataRef, (snapshot) => {
+    // Fix: Replaced v9 onValue() with v8 .on() and manual unsubscribe.
+    const listener = (snapshot: DataSnapshot) => {
         if (snapshot.exists()) {
             callback(deserializeState(snapshot.val()));
         } else {
             callback(null); // No data exists for this class yet
         }
-    }, (error) => {
-        console.error("Firebase listener error:", error);
-    });
+    };
 
-    return unsubscribe;
+    const errorCallback = (error: Error) => {
+        console.error("Firebase listener error:", error);
+    };
+
+    dataRef.on('value', listener, errorCallback);
+
+    return () => dataRef.off('value', listener);
 };
