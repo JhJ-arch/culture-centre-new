@@ -6,6 +6,38 @@ import StudentPage from './pages/StudentPage';
 import LoginPage from './pages/LoginPage';
 import { AppContext } from './contexts/AppContext';
 import { MOCK_COURSES, MOCK_STUDENTS } from './constants';
+import { useAppContext } from './hooks/useAppContext';
+
+const AppRouter: React.FC = () => {
+    const { user } = useAppContext();
+
+    if (!user) {
+        return (
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+        );
+    }
+
+    const homePath = user.role === Role.Teacher ? '/teacher' : '/student';
+
+    return (
+        <Routes>
+            <Route path="/login" element={<Navigate to={homePath} replace />} />
+
+            {user.role === Role.Teacher && (
+                <Route path="/teacher/*" element={<TeacherPage />} />
+            )}
+
+            {user.role === Role.Student && (
+                <Route path="/student/*" element={<StudentPage />} />
+            )}
+            
+            <Route path="*" element={<Navigate to={homePath} replace />} />
+        </Routes>
+    );
+};
 
 const App: React.FC = () => {
     const [user, setUser] = useState<User | null>(null);
@@ -27,14 +59,7 @@ const App: React.FC = () => {
     return (
         <AppContext.Provider value={contextValue}>
             <HashRouter>
-                <Routes>
-                    <Route path="/login" element={
-                        user ? (user.role === Role.Teacher ? <Navigate to="/teacher" /> : <Navigate to="/student" />) : <LoginPage />
-                    } />
-                    <Route path="/teacher/*" element={user?.role === Role.Teacher ? <TeacherPage /> : <Navigate to="/login" />} />
-                    <Route path="/student/*" element={user?.role === Role.Student ? <StudentPage /> : <Navigate to="/login" />} />
-                    <Route path="*" element={<Navigate to="/login" />} />
-                </Routes>
+                <AppRouter />
             </HashRouter>
         </AppContext.Provider>
     );
