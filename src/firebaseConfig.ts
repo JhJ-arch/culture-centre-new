@@ -1,3 +1,5 @@
+// src/firebaseConfig.ts
+
 // Fix: Add a triple-slash directive to provide type definitions for `import.meta.env`.
 /// <reference types="vite/client" />
 
